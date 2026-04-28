@@ -16,7 +16,7 @@ function autoMigrate(db: Database) {
 		email TEXT UNIQUE NOT NULL
 	);
 	`;
-  db.exec(userTable);
+  db.run(userTable);
 
   const refreshTokenTable = `
 	CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -29,7 +29,7 @@ function autoMigrate(db: Database) {
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 	`;
-  db.exec(refreshTokenTable);
+  db.run(refreshTokenTable);
 
   const videoTable = `
 	CREATE TABLE IF NOT EXISTS videos (
@@ -44,11 +44,11 @@ function autoMigrate(db: Database) {
 		FOREIGN KEY(user_id) REFERENCES users(id)
 	);
 	`;
-  db.exec(videoTable);
+  db.run(videoTable);
 }
 
 export function reset(db: Database) {
-  db.exec("DELETE FROM refresh_tokens");
-  db.exec("DELETE FROM users");
-  db.exec("DELETE FROM videos");
+  db.run("DELETE FROM refresh_tokens");
+  db.run("DELETE FROM users");
+  db.run("DELETE FROM videos");
 }
