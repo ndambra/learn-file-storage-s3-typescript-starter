@@ -1,10 +1,11 @@
+import { randomBytes } from 'crypto';
 import { getBearerToken, validateJWT } from "../auth";
 import { respondWithJSON } from "./json";
 import { getVideo, updateVideo } from "../db/videos";
 import type { ApiConfig } from "../config";
 import { type BunRequest } from "bun";
 import { BadRequestError, NotFoundError, UserForbiddenError } from "./errors";
-import path from "path";
+import { getAssetDiskPath, getAssetURL, mediaTypeToExt } from "./assets";
 
 const MAX_UPLOAD_SIZE = 10 << 20;
 
@@ -48,20 +49,15 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
     throw new BadRequestError("Invalid file type");
   }
 
-  const arrayBuffer = await thumbnail.arrayBuffer();
-  if (!arrayBuffer) {
-    throw new Error("Error reading file data");
-  }
+  const ext = mediaTypeToExt(mediaType);
+  const randomFilename = randomBytes(32).toString("base64url");
+  const fileName = `${randomFilename}${ext}`;
 
-  const buffer = Buffer.from(arrayBuffer);
+  const assetDiskpath = getAssetDiskPath(cfg, fileName);
+  Bun.write(assetDiskpath, thumbnail);
 
-  const ext = mediaType.split("/")[1];
-  const fileName = `${videoId}.${ext}`;
-  const assetsRoot = cfg.assetsRoot.split(".")[1];
-  const filePath = path.join(assetsRoot, fileName);
-  Bun.write(filePath, buffer);
-
-  videoMD.thumbnailURL = filePath;
+  const urlPath = getAssetURL(cfg, fileName);
+  videoMD.thumbnailURL = urlPath;
   updateVideo(cfg.db, videoMD);
 
   return respondWithJSON(200, videoMD);
